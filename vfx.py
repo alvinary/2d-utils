@@ -1,5 +1,5 @@
 from pyglet.sprite import Sprite
-from utils import animation_from_gif
+from pyglet.resource import animation
 from batches import occlusion_batch
 from tags import PARTICLE
 
@@ -8,7 +8,7 @@ class Particle:
     def __init__(self, x, y, animation, lifetime):
         self.x = x
         self.y = y
-        self.animation = animation_from_gif('vfx/' + animation + '.gif')
+        self.animation = animation('vfx/' + animation + '.gif')
         self.lifetime = lifetime
         self.shape = Sprite(self.animation,
                             self.x - 8 * 3,
