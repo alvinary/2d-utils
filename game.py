@@ -1,12 +1,12 @@
 from json import dumps
 from collections import defaultdict
-from indices import entity_index
 
 class Game:
 
     def __init__(self, initial_state):
         self.entities = set() # Deberia ser un set, porque el removal es comun
         self.index = defaultdict(lambda: set())
+        self.entity_index = defaultdict(lambda: lambda x: False)
         self.load(initial_state)
 
     def add_entity(self, entity):
@@ -22,7 +22,8 @@ class Game:
 
     def load_entity(self, data):
         constructor = entity_index[data['type']]
-        return constructor(data)
+        new_entity = constructor(data)
+        self.add_entity(new_entity)
 
     def save(self):
         entities = []
