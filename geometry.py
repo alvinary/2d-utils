@@ -134,48 +134,6 @@ class Rectangle:
             'minimal' : self.minimal.save(),
             'maximal' : self.maximal.save()
         }
-
-class Triangle:
-
-    def __init__(self, corners):
-        is_list = isinstance(corners, list)
-        if not is_list:
-            raise Exception(f"Argument 'corners' of Triangle(corners) must be a list")
-        all_points = all([isinstance(corner, Point) for corner in corners])
-        three_points = len(corners) == 3
-        if not all_points and not three_points:
-            raise Exception(f"Argument 'corners' of Triangle(corners) must be a list with three elements and all must be points")
-        
-        self.corners = corners
-    
-    def __str__(self):
-        pass
-
-    def distance(self, other):
-        return
-
-    def collides(self, other):
-        pass
-
-    def save(self, other):
-        pass
-
-class Polygon:
-    
-    def __init__(self, vertices):
-        pass
-
-    def __str__(self):
-        pass
-
-    def distance(self, other):
-        return
-
-    def collides(self, other):
-        pass
-
-    def save(self, other):
-        pass
      
 class Point:
 
