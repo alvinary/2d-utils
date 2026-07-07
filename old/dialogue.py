@@ -2,6 +2,7 @@ from collections import defaultdict
 from random import choice as random_element
 
 from ui import Text, Button, Menu
+
 from pyglet.shapes import Rectangle
 from pyglet.sprite import Sprite
 from pyglet.resource import image
