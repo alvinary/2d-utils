@@ -2,7 +2,6 @@ from collections import defaultdict
 from random import choice as random_element
 
 from ui import Text, Button, Menu
-
 from pyglet.shapes import Rectangle
 from pyglet.sprite import Sprite
 from pyglet.resource import image
@@ -12,14 +11,6 @@ from engine_constants import menu_blue, ui_batch, over_ui_batch, highlight_red, 
 from engine_constants import ALTERNATIVES, SEQUENCE, CHOICE
 
 from facts import facts
-
-# If a choice has two choices and no text entry, you get a weird bug. Figure out why!
-# Ah: it probably thinks it should move three indices (the one for the text entry, the one for the choices) or something similar? Not sure
-
-# TODO: the order in which you call consequences() and conditions() should not affect the results.
-# It's just checking from :then to the end of the line or :if
-
-# TODO: chequear que no haya caracateres que no se pueden renderizar
 
 CLOSEUP_WIDTH = 45
 CLOSEUP_SCALE = 3
@@ -352,6 +343,9 @@ class Dialogue:
         return entry_text
     
     def choice_entry(self, entry):
+        # Note all valid choice dialogue entries must have at least two different choices, and one text only entry.
+        # Otherwise, indexing assumptions lead to popping out of an empty stack, or advancing an incorrect number of steps
+        # in dialogue.
         self.normal_entry = False
         entry = entry[1:] # Remove the 'CHOICE' head
         text, choices, portrait_text = self.read_entry(entry)
