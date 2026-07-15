@@ -4,7 +4,6 @@ from itertools import product
 
 # TODO: omit transparent / absent tiles
 # TODO: replace shapes until fixpoint or cap is reached
-
 # TODO: add object layers (layers that output a json with a list of entities instead of a map png)
 
 class Tiler:
@@ -56,13 +55,9 @@ class Tiler:
                 if tile_color in self.tile_map.keys():
                     layer_tiles[i, j] = self.tile_map[tile_color]
                 else:
-                    lowest = 255**2 + 255**2 + 255**2
-                    for color in self.tile_map.keys():
-                        distance = sum([abs(tile_color[i]**2 - color[i]**2) for i in [0, 1, 2]])
-                        if distance < lowest:
-                            current = color
-                            lowest = distance
-                    tile_color = current
+                    distance = lambda x : sum([abs(tile_color[i]**2 - x[i]**2) for i in [0, 1, 2]])
+                    colors = self.tile_map.keys()
+                    tile_color = min(colors, key=distance)
                     layer_tiles[i, j] = self.tile_map[tile_color]
             sorted_shapes = list(reversed(sorted(self.shapes_map.keys(), key=(lambda x: len(x.keys())))))
             for shape in sorted_shapes:
