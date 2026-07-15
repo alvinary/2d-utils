@@ -2,6 +2,9 @@ from PIL import Image
 
 from itertools import product
 
+# TODO: omit transparent / absent tiles
+# TODO: replace shapes until fixpoint or cap is reached
+
 class Tiler:
     def __init__(self, tile_map, tile_size, shapes_map):
         self.tile_map = tile_map
