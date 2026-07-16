@@ -36,7 +36,7 @@ class InverseTiler:
         target_height = block_height * self.target_size
         reversed_tilemap = Image.new("RGBA", (target_width, target_height), (0, 0, 0, 0))
         for i, j in product(range(block_width), range(block_height)):
-            source_tile = self.normalize(source_image, i, j)
+            source_tile = self.normalize(source_image, i * self.source_size, j * self.source_size)
             target_tile = self.tile_map[source_tile]
             reversed_tilemap.paste(target_tile, (i * self.target_size, j * self.target_size))
         return reversed_tilemap
@@ -142,6 +142,8 @@ images = [Image.open(p) for p in paths]
 inverse = InverseTiler({}, 16, 1)
 reverse_map = {}
 for index, image in enumerate(images):
+    assert(inverse.normalize(image, 0, 0) == inverse.normalize(image, 0, 0))
     inverse.tile_map[inverse.normalize(image, 0, 0)] = Image.new("RGBA", (1, 1), tuple(list(colors[index]) + [255]))
+assert inverse.normalize(Image.open('mapapa_0.png'), 0, 0) == inverse.normalize(Image.open('tiles/rock.png'), 0, 0)
 reversed_tilemap = inverse.reverse_map(Image.open('mapapa_0.png'))
 reversed_tilemap.save('revu_revu.png')
