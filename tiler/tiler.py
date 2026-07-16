@@ -5,6 +5,7 @@ from itertools import product
 # TODO: omit transparent / absent tiles
 # TODO: replace shapes until fixpoint or cap is reached
 # TODO: add object layers (layers that output a json with a list of entities instead of a map png)
+# TODO: add decent map loader to InverseTiler
 
 class InverseTiler:
 
@@ -13,7 +14,8 @@ class InverseTiler:
         self.source_size = source_size
         self.target_size = target_size
 
-    def normalize(self, image_pixels, i, j, window=False):
+    def normalize(self, image, i, j, window=False):
+        image_pixels = image.load()
         if window:
             window_size = int(window)
         else:
@@ -21,7 +23,7 @@ class InverseTiler:
         # Map an image section to a hashable type (a frozendict) with the same data
         # at the same keys (but treating i, j as the origin)
         new = set()
-        for x, y in range(product(range(i, i + window_size), range(j, j + window_size))):
+        for x, y in product(range(i, i + window_size), range(j, j + window_size)):
             new.add((x - i, y - j, image_pixels[x, y]))
         return frozenset(new)
 
@@ -30,11 +32,13 @@ class InverseTiler:
         # cover the source image evenly
         block_width = source_image.width // self.source_size
         block_height = source_image.height // self.source_size
-        reversed_tilemap = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        target_width = block_width * self.target_size
+        target_height = block_height * self.target_size
+        reversed_tilemap = Image.new("RGBA", (target_width, target_height), (0, 0, 0, 0))
         for i, j in product(range(block_width), range(block_height)):
             source_tile = self.normalize(source_image, i, j)
             target_tile = self.tile_map[source_tile]
-            reversed_tilemap.paste(target_tile, (i * self.target_size_size, j * self.target_size))
+            reversed_tilemap.paste(target_tile, (i * self.target_size, j * self.target_size))
         return reversed_tilemap
 
 
@@ -131,3 +135,13 @@ sample_map = {
 }
 tyler = Tiler(sample_map, 16, {})
 tyler.save_map_pngs('mapapa', ['layer.png'])
+
+colors = [(0, 255, 0), (0, 0, 255), (255, 0, 0)]
+paths = ['tiles/sand.png', 'tiles/water.png', 'tiles/rock.png']
+images = [Image.open(p) for p in paths]
+inverse = InverseTiler({}, 16, 1)
+reverse_map = {}
+for index, image in enumerate(images):
+    inverse.tile_map[inverse.normalize(image, 0, 0)] = Image.new("RGBA", (1, 1), tuple(list(colors[index]) + [255]))
+reversed_tilemap = inverse.reverse_map(Image.open('mapapa_0.png'))
+reversed_tilemap.save('revu_revu.png')
