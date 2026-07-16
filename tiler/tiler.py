@@ -6,6 +6,38 @@ from itertools import product
 # TODO: replace shapes until fixpoint or cap is reached
 # TODO: add object layers (layers that output a json with a list of entities instead of a map png)
 
+class InverseTiler:
+
+    def __init__(self, tile_map, source_size, target_size):
+        self.tile_map = tile_map
+        self.source_size = source_size
+        self.target_size = target_size
+
+    def normalize(self, image_pixels, i, j, window=False):
+        if window:
+            window_size = int(window)
+        else:
+            window_size = int(self.source_size)
+        # Map an image section to a hashable type (a frozendict) with the same data
+        # at the same keys (but treating i, j as the origin)
+        new = set()
+        for x, y in range(product(range(i, i + window_size), range(j, j + window_size))):
+            new.add((x - i, y - j, image_pixels[x, y]))
+        return frozenset(new)
+
+    def reverse_map(self, source_image):
+        # TODO: Handle errors / at least warn users when the tile size does not
+        # cover the source image evenly
+        block_width = source_image.width // self.source_size
+        block_height = source_image.height // self.source_size
+        reversed_tilemap = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        for i, j in product(range(block_width), range(block_height)):
+            source_tile = self.normalize(source_image, i, j)
+            target_tile = self.tile_map[source_tile]
+            reversed_tilemap.paste(target_tile, (i * self.target_size_size, j * self.target_size))
+        return reversed_tilemap
+
+
 class Tiler:
     def __init__(self, tile_map, tile_size, shapes_map):
         self.tile_map = tile_map
@@ -91,11 +123,11 @@ class Tiler:
             layer_png.paste(tile_image, (x * self.tile_size, y * self.tile_size))
         return layer_png
 
-if __name__ == '__main___':
-    sample_map = {
-        (255, 0, 0) : 'tiles/rock.png',
-        (0, 0, 255) : 'tiles/water.png',
-        (0, 255, 0) : 'tiles/sand.png'
-    }
-    tyler = Tiler(sample_map, 16, {})
-    tyler.save_map_pngs('mapapa', ['layer.png'])
+
+sample_map = {
+    (255, 0, 0) : 'tiles/rock.png',
+    (0, 0, 255) : 'tiles/water.png',
+    (0, 255, 0) : 'tiles/sand.png'
+}
+tyler = Tiler(sample_map, 16, {})
+tyler.save_map_pngs('mapapa', ['layer.png'])
