@@ -52,8 +52,6 @@ class InverseTiler:
             window_size = int(window)
         else:
             window_size = int(self.source_size)
-        # Map an image section to a hashable type (a frozendict) with the same data
-        # at the same keys (but treating i, j as the origin)
         new = set()
         for x, y in product(range(i, i + window_size), range(j, j + window_size)):
             new.add((x - i, y - j, image_pixels[x, y]))
@@ -78,7 +76,6 @@ class Tiler:
     def __init__(self, tile_map, tile_size, shapes_map):
         self.tile_map = tile_map
         self.tile_size = tile_size
-        self.shapes_map = shapes_map
 
     # Sería mejor que fueran las imagenes, no los paths
     def make_map(self, name, layer_paths):
@@ -98,9 +95,6 @@ class Tiler:
                     colors = self.tile_map.keys()
                     tile_color = min(colors, key=distance)
                     layer_tiles[i, j] = self.tile_map[tile_color]
-            sorted_shapes = list(reversed(sorted(self.shapes_map.keys(), key=(lambda x: len(x.keys())))))
-            for shape in sorted_shapes:
-                self.replace_all(layer_tiles, shape, self.shape_map[shape])
             output_layers.append(layer_tiles)
         return output_layers
 
@@ -139,7 +133,7 @@ sample_map = {
 
 sample_replacements = {}
 
-tyler = Tiler(sample_map, 16, {})
+tyler = Tiler(sample_map, 16)
 tyler.save_map_pngs('mapapa', ['layer.png'])
 
 colors = [(0, 255, 0), (0, 0, 255), (255, 0, 0)]
