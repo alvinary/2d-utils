@@ -2,10 +2,42 @@ from PIL import Image
 
 from itertools import product
 
-# TODO: omit transparent / absent tiles
-# TODO: replace shapes until fixpoint or cap is reached
-# TODO: add object layers (layers that output a json with a list of entities instead of a map png)
-# TODO: add decent map loader to InverseTiler
+# TODO:
+# Omit tiles without a match
+# Report tiles without a match
+# Read mapping from file
+# Report duplicate keys (with different or the same values)
+# Report duplicate values (with the same or different keys)
+
+class TilemapTagger:
+
+    # Copy-paste of InverseTiler, but for annotations
+
+    def __init__(self, annotations_map, source_size):
+        self.annotations_map = annotations_map
+        self.source_size = source_size
+
+    def normalize(self, image, i, j, window=False):
+        image_pixels = image.load()
+        if window:
+            window_size = int(window)
+        else:
+            window_size = int(self.source_size)
+        new = set()
+        for x, y in product(range(i, i + window_size), range(j, j + window_size)):
+            new.add((x - i, y - j, image_pixels[x, y]))
+        return frozenset(new)
+
+    def annotations(self, source_image):
+        block_width = source_image.width // self.source_size
+        block_height = source_image.height // self.source_size
+        target_width = block_width * self.target_size
+        target_height = block_height * self.target_size
+        map_annotation = []
+        for i, j in product(range(block_width), range(block_height)):
+            source_tile = self.normalize(source_image, i * self.source_size, j * self.source_size)
+            annotation = (i, j, self.annotation_map[source_tile])
+        return map_annotation
 
 class InverseTiler:
 
@@ -47,35 +79,6 @@ class Tiler:
         self.tile_map = tile_map
         self.tile_size = tile_size
         self.shapes_map = shapes_map
-
-    def match_shape(self, tiles, shape):
-        # Translate the shape to the origin
-        # If there is a match (intersections equal), return the translated coordinates and their contents
-        tiles_set = set([((x, y, tiles[x, y]) for x, y in tiles.keys())])
-        matches = []
-        for (x, y) in tiles.keys():
-            translated_shape = self.translated_shape(shape, x, y)
-            translated_shape_set = set([((x, y, translated_shape[x, y]) for x, y in translated_shape.keys())])
-            if translated_shape_set <= tiles_set:
-                matches.append(translated_shape)
-        return matches
-
-    def translated_shape(self, shape, x, y):
-        new_shape = {}
-        min_x = min([x for x, y in shape.keys()])
-        min_y = min([y for x, y in shape.keys()])
-        delta_x = x - min_x
-        delta_y = y - min_y
-        for (x, y) in shape.keys():
-            new_shape[x + delta_x, y + delta_y] = shape[x, y]
-        return new_shape
-
-    def replace(self, layer, source, target):
-        for pixel in source:
-            layer.pop(pixel)
-        for pixel in target:
-            layer[pixel] = target[pixel]
-        return layer
 
     # Sería mejor que fueran las imagenes, no los paths
     def make_map(self, name, layer_paths):
@@ -133,6 +136,9 @@ sample_map = {
     (0, 0, 255) : 'tiles/water.png',
     (0, 255, 0) : 'tiles/sand.png'
 }
+
+sample_replacements = {}
+
 tyler = Tiler(sample_map, 16, {})
 tyler.save_map_pngs('mapapa', ['layer.png'])
 
