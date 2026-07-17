@@ -62,9 +62,9 @@ class InverseTiler:
         height = mapping_image.height
         blocks = height // self.source_size
         for i in range(blocks):
-            source_tile = self.normalize(mapping_image, i * self.target_size, self.target_size)
+            source_tile = self.normalize(mapping_image, self.target_size, i * self.target_size)
             target_box = (0, i * self.target_size, self.target_size, (i+1) * self.target_size)
-            target_tile = mapping_image.crop(target_section).copy()
+            target_tile = mapping_image.crop(target_box).copy()
             self.tile_map[source_tile] = target_tile
 
     def reverse_map(self, source_image):
@@ -77,7 +77,10 @@ class InverseTiler:
         reversed_tilemap = Image.new("RGBA", (target_width, target_height), (0, 0, 0, 0))
         for i, j in product(range(block_width), range(block_height)):
             source_tile = self.normalize(source_image, i * self.source_size, j * self.source_size)
-            target_tile = self.tile_map[source_tile]
+            if source_tile in self.tile_map:
+                target_tile = self.tile_map[source_tile]
+            else:
+                target_tile = Image.new("RGBA", (target_width, target_height), (0, 0, 0, 0))
             reversed_tilemap.paste(target_tile, (i * self.target_size, j * self.target_size))
         return reversed_tilemap
 
@@ -157,3 +160,8 @@ for index, image in enumerate(images):
 assert inverse.normalize(Image.open('mapapa_0.png'), 0, 0) == inverse.normalize(Image.open('tiles/rock.png'), 0, 0)
 reversed_tilemap = inverse.reverse_map(Image.open('mapapa_0.png'))
 reversed_tilemap.save('revu_revu.png')
+
+reversed_tilemap = InverseTiler({}, 16, 16)
+reversed_tilemap.load_mapping('mapping.png')
+aber = reversed_tilemap.reverse_map(Image.open("DirectionalColorCoded.png"))
+aber.save('showy.png')
