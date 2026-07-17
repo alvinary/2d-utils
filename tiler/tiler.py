@@ -47,7 +47,7 @@ class InverseTiler:
         self.target_size = target_size
 
     def normalize(self, image, i, j, window=False):
-        image_pixels = image.load()
+        image_pixels = image.load() # TODO: pass a copy instead of creating one each time
         if window:
             window_size = int(window)
         else:
@@ -56,6 +56,16 @@ class InverseTiler:
         for x, y in product(range(i, i + window_size), range(j, j + window_size)):
             new.add((x - i, y - j, image_pixels[x, y]))
         return frozenset(new)
+
+    def load_mapping(self, mapping_path):
+        mapping_image = Image.open(mapping_path)
+        height = mapping_image.height
+        blocks = height // self.source_size
+        for i in range(blocks):
+            source_tile = self.normalize(mapping_image, i * self.target_size, self.target_size)
+            target_box = (0, i * self.target_size, self.target_size, (i+1) * self.target_size)
+            target_tile = mapping_image.crop(target_section).copy()
+            self.tile_map[source_tile] = target_tile
 
     def reverse_map(self, source_image):
         # TODO: Handle errors / at least warn users when the tile size does not
