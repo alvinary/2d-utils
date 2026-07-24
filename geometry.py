@@ -56,6 +56,9 @@ class Circle:
     def __str__(self):
         return dumps(self.save())
 
+    def move(self, x, y):
+        self.center = Point(x, y)
+
     def distance(self, other):
         if isinstance(other, Point):
             return self.center.distance(other) - self.radius
@@ -97,6 +100,12 @@ class Rectangle:
 
     def __str__(self):
         return dumps(self.save())
+
+    def move(self, x, y):
+        dx = x - (self.minimal.x + (self.maximal.x - self.minimal.x) / 2)
+        dy = y - (self.minimal.y + (self.maximal.y - self.minimal.y) / 2)
+        self.maximal = Point(self.maximal.x + dx, self.maximal.y + dy)
+        self.minimal = Point(self.minimal.x + dx, self.minimal.y + dy)
     
     def distance(self, other):
         if isinstance(other, Rectangle):
@@ -170,6 +179,10 @@ class Point:
         if isinstance(other, Number):
             return Point(self.x * other, self.y * other)
         raise Exception(f"Argument 'other' of Point.__rmul__(other) must be a Number. Here, 'other' was a {str(type(other))}")
+
+    def move(self, x, y):
+        self.x = x
+        self.y = y
 
     def norm(self):
         return sqrt(self.x ** 2 + self.y ** 2)
@@ -249,5 +262,3 @@ class Point:
             'x': self.x, 
             'y': self.y
         }
-    
-'float, not {type(value)}'
