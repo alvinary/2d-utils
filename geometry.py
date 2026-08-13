@@ -16,6 +16,8 @@ def check_type(name, signature, expected_type, expected_type_name, actual_value)
         raise Exception(message + specifics)
 
 def line_distance(p, q, a):
+    if sqrt((q.x - p.x)**2 + (q.y - p.y)**2) == 0:
+        return p.distance(a)
     return (abs(q.x - p.x) * (p.y - a.y) - (p.x - a.x) * (q.y - p.y)) / sqrt((q.x - p.x)**2 + (q.y - p.y)**2)
 
 def nearest_point_on_segment(pt, r0, r1, clip=True):
@@ -386,6 +388,8 @@ class Point:
         return Point(-self.y, self.x)
 
     def unit(self):
+        if self.norm() == 0:
+            return self # Huh, what should this return?
         return self.scale(1 / self.norm())
     
     def scale(self, scalar):
@@ -395,6 +399,8 @@ class Point:
     
     def direction_vector(self, other):
         difference = other - self
+        if difference.norm() == 0:
+            return difference
         return difference.scale(1 / difference.norm())
 
     def collides(self, other):
@@ -448,6 +454,8 @@ class Point:
     def angle(self, other):
         scalar_product = self.x * other.x + self.y * other.y
         norms_product = self.norm() * other.norm()
+        if norms_product == 0:
+            return pi / 2 # This is zero when any of the vectors is zero, not sure if this is ok
         return acos(scalar_product / norms_product)
 
     def rotate(self, angle):
