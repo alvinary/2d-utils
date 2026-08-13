@@ -152,3 +152,22 @@ def test_within_distance():
             print(int(line_distance(p, q, not_within)))
             assert length > distance
             assert int(nearest_point_on_segment(within, p, q).distance(within)) - int(length) <= 1
+
+def test_collisions():
+    A = Segment(Point(3, 15), Point(10, 10))
+    B = Segment(Point(3, 13), Point(6, 14))
+    C = Segment(Point(2, 7), Point(10, 7))
+    D = Segment(Point(5, 8), Point(7, 8))
+    E = Circle(Point(6, 13), 2)
+    F = Circle(Point(6, 11), 2)
+    G = Triangle([Point(4, 7), Point(8, 7), Point(6, 10)])
+    H = Triangle([Point(4, 5), Point(8, 5), Point(6, 8)])
+    I = Rectangle(Point(3, 5), Point(5, 6))
+    J = Rectangle(Point(9, 8), Point(12, 14))
+    assert A.collides(E)
+    assert A.collides(J)
+    assert A.collides(F)
+    assert not A.collides(G)
+    assert B.collides(E)
+    assert not B.collides(F)
+    assert not A.collides(I)

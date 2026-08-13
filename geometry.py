@@ -7,7 +7,7 @@ from math import pi
 from random import uniform
 
 ## This module does not support operations requiring high numeric precision
-## Its intended use case is () 2D vectors with integer coordinates
+## Its intended use is limited to operations with 2D vectors with integer coordinates for 2D games
 
 def check_type(name, signature, expected_type, expected_type_name, actual_value):
     if not isinstance(actual_value, expected_type):
@@ -20,7 +20,6 @@ def line_distance(p, q, a):
 
 def nearest_point_on_segment(pt, r0, r1, clip=True):
     # Taken from user Andrew's reply in https://stackoverflow.com/questions/910882/how-can-i-tell-if-a-point-is-nearby-a-certain-line
-
     r01 = r1 - r0                     # vector from r0 to r1 
     d = r01.norm()                    # length of r01
     r01u = r0.direction_vector(r1)    # unit vector from r0 to r1
@@ -28,8 +27,8 @@ def nearest_point_on_segment(pt, r0, r1, clip=True):
     rid = r.x * r01u.x + r.y * r01u.y # projection (length) of r onto r01u
     ri = rid * r01u                   # projection vector
     lpt = r0 + ri                     # point on line
-    if clip:                          # if projection is not on line segment
-        if rid > d:                   # clip to endpoints if clipToSegment set
+    if clip:                          # if projection is not on line segment, clip to endpoints if clip is set to True
+        if rid > d:                   
             return r1
         if rid < 0:
             return r0
@@ -37,6 +36,58 @@ def nearest_point_on_segment(pt, r0, r1, clip=True):
 
 def segment_within_distance(p, q, a, d):
     return int(d) - int(nearest_point_on_segment(a, p, q).distance(a)) > -1
+
+# Segment intersection
+
+def orientation(p, q, r):
+    px, py = p.x, p.y
+    qx, qy = q.x, q.y
+    rx, ry = r.x, r.y
+    result = (qy - py) * (rx - qx) - (qx - px) * (ry - qy)
+    if result > 0:
+        orientation = 1
+    if result < 0:
+        orientation = 2
+    if result == 0:
+        orientation = 0
+    return orientation
+
+def on_segment(p, q, r):
+    return q.x <= max(p.x, r.x) and q.x >= min(p.x, r.x) and q.y <= max(p.y, r.y) and q.y >= min(p.y, r.y)
+
+def segments_intersect(p1, q1, p2, q2):
+    o1 = orientation(p1, q1, p2)
+    o2 = orientation(p1, q1, q2)
+    o3 = orientation(p2, q2, p1)
+    o4 = orientation(p2, q2, q1)
+    if ((o1 != o2) and (o3 != o4)):
+        return True
+    if ((o1 == 0) and on_segment(p1, p2, q1)):
+        return True
+    if ((o2 == 0) and on_segment(p1, q2, q1)):
+        return True
+    if ((o3 == 0) and on_segment(p2, p1, q2)):
+        return True
+    if ((o4 == 0) and on_segment(p2, q1, q2)):
+        return True
+    return False
+
+# Point within triangle
+
+def get_side_sign(p1, p2, p3):
+    return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
+
+def triangle_contains_point(traingle_vertices, point):
+    v1, v2, v3 = traingle_vertices
+    pt = point
+    d1 = get_side_sign(pt, v1, v2)
+    d2 = get_side_sign(pt, v2, v3)
+    d3 = get_side_sign(pt, v3, v1)
+    has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+    has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+    return not (has_neg and has_pos)
+
+# Module classes proper
     
 class Circle:
 
@@ -76,7 +127,11 @@ class Circle:
             return self.distance(other) <= 0
         if isinstance(other, Rectangle):
             return other.collides(self)
-        raise Exception("Argument 'other' of Circle.collides(other) must be a Circle, Point, or Rectangle.")
+        if isinstance(other, Triangle):
+            return other.collides(self)
+        if isinstance(other, Segment):
+            return other.collides(self)
+        raise Exception("Argument 'other' of Circle.collides(other) must be a Circle, Point, Rectangle, Segment or Triangle.")
     
     def save(self):
         return {
@@ -107,6 +162,7 @@ class Rectangle:
         self.maximal = Point(self.maximal.x + dx, self.maximal.y + dy)
         self.minimal = Point(self.minimal.x + dx, self.minimal.y + dy)
     
+    # TODO: define for segments
     def distance(self, other):
         if isinstance(other, Rectangle):
             return 0
@@ -128,7 +184,11 @@ class Rectangle:
             return not (entirely_right or entirely_below or entirely_left or entirely_above)
         if isinstance(other, Circle):
             return self.collides(other.center) or (other.center.distance(self) < other.radius)
-        raise Exception("Argument 'other' of Rectangle.collides(other) must be a Circle, Point, or Rectangle.")
+        if isinstance(other, Triangle):
+            return other.collides(self)
+        if isinstance(other, Segment):
+            return other.collides(self)
+        raise Exception("Argument 'other' of Rectangle.collides(other) must be a Circle, Point, Rectangle, Triangle, or Segment.")
     
     def center(self):
         bottom_right = Point(self.maximal.x, self.minimal.y)
@@ -143,6 +203,134 @@ class Rectangle:
             'minimal' : self.minimal.save(),
             'maximal' : self.maximal.save()
         }
+
+class Segment:
+
+    def __init__(self, begin, end):
+        self.begin = begin
+        self.end = end
+
+    def __str__(self):
+        return dumps(self.save())
+
+    def __eq__(self, other):
+        if not isinstance(other, Segment):
+            return False
+        return (self.begin == other.begin and self.end == other.end) or (self.begin == other.end and self.end == other.begin)
+
+    def save(self):
+        return {
+            'type' : 'Triangle',
+            'begin' : self.begin.save(),
+            'end' : self.end.save()
+        }
+
+    def length(self):
+        return (self.end - self.begin).norm()
+
+    def collides(self, other):
+        if isinstance(other, Circle):
+            # True if the point lying on the segment that's closest
+            # to the center of the circle is within 'other.radius' of it
+            return nearest_point_on_segment(other.center, self.begin, self.end).distance(other.center) <= other.radius
+        if isinstance(other, Rectangle):
+            # True if any of the segment ends is inside the rectangle, 
+            # or any side of the rectangle intersects with the segment
+            if other.collides(self.begin) or other.collides(self.end):
+                return True
+            mx, my = other.minimal.x, other.minimal.y
+            Mx, My = other.maximal.x, other.maximal.y
+            edges = ([Segment(Point(mx, my), Point(Mx, my)), 
+                      Segment(Point(Mx, my), Point(Mx, My)), 
+                      Segment(Point(Mx, My), Point(mx, My)),
+                      Segment(Point(mx, My), Point(mx, my))])
+            return any([self.collides(edge) for edge in edges])
+        if isinstance(other, Point):
+            return (self.begin.x <= max(other.x, self.end.x) and 
+                    self.begin.x >= min(other.x, self.end.x) and 
+                    self.begin.y <= max(other.y, self.end.y) and 
+                    self.begin.y >= min(other.y, self.end.y))
+        if isinstance(other, Segment):
+            return segments_intersect(self.begin, self.end, other.begin, other.end)
+        if isinstance(other, Triangle):
+            return other.collides(self)
+        raise Exception("Argument 'other' of Segment.collides(other) must be a Circle, Point, Rectangle, Segment or Triangle.")
+
+class Triangle:
+
+    def __init__(self, vertices):
+        self.vertices = vertices
+
+        three_elements = len(self.vertices) == 3
+        all_points = all([isinstance(v, Point) for v in vertices])
+        if not three_elements and all_points:
+            error_message = "A Triangle must be initialized by supplying a list with exactly three points.\n"
+            error_message += "The argument supplied, however,\n"
+            if not three_elements:
+                error_message += "...was of length {len(self.vertices)}.\n"
+            if not all_points:
+                error_message += "...contained instances of other clases: " + ", ".join([str(type(v) for v in vertices)])
+            raise Exception(error_message)
+
+    def __str__(self):
+        pass
+
+    def __eq__(self, other):
+        if not isinstance(other, Triangle):
+            return False
+        return set([(p.x, p.y) for p in self.vertices]) == set([(p.x, p.y) for p in other.vertices])
+
+    def collides(self, other):
+        if isinstance(other, Circle):
+            # If the center is inside the triangle, the shapes collide
+            if self.collides(other.center):
+                return true
+            # If the center is outside the triangle, then there must be an edge that's the closest to it. 
+            # That edge has a point closest to the center, and the shapes collide if the distance is less or equal than the radius
+            first, second, _ = sorted(self.vertices, lambda x: distance(x, other.center))
+            closest_point = nearest_point_on_segment(other.center, first, second)
+            return (other.center - closest_point).norm() <= other.radius
+        if isinstance(other, Rectangle):
+            # True if any of the edges of self and other intersect,
+            # or if any of the vertices of the triangle is contained
+            # in the rectangle
+            vertices_inside = [v for v in self.vertices if other.collide(v)]
+            if vertices_inside:
+                return True
+            v1, v2, v3 = self.vertices
+            triangle_edges = [Segment(v1, v2), Segment(v2, v3), Segment(v3, v1)] # Maybe it'd be best to just have the edges, to avoid computing them every time
+            mx, my = other.minimal.x, other.minimal.y
+            Mx, My = other.maximal.x, other.maximal.y
+            rectangle_edges = ([Segment(Point(mx, my), Point(Mx, my)), 
+                      Segment(Point(Mx, my), Point(Mx, My)),
+                      Segment(Point(Mx, My), Point(mx, My)),
+                      Segment(Point(mx, My), Point(mx, my))])
+            collisions = False
+            for edge in triangle_edges:
+                collisions = collisions or any([edge.collide(e) for e in rectangle_edges])
+            return collisions
+        if isinstance(other, Point):
+            # Defined in an auxiliary function
+            return triangle_contains_point(self.vertices, other)
+        if isinstance(other, Segment):
+            # True if any of the segments ends is within the triangle
+            # or the segment intersects with any of the edges
+            return False
+        if isinstance(other, Triangle):
+            # True if... sigh... any... of... the vertices is within the other triangle,
+            # or any pair of edges collide
+            return False
+        raise Exception("Argument 'other' of Segment.collides(other) must be a Circle, Point, Rectangle, Segment or Triangle.")
+
+    def move(self, x, y):
+        pass
+
+    def distance(self, other):
+        pass
+
+    def collide(self, other):
+        pass
+        
      
 class Point:
 
@@ -207,9 +395,13 @@ class Point:
             return other.collides(self)
         if isinstance(other, Rectangle):
             return other.collides(self)
+        if isinstance(other, Triangle):
+            return other.collides(self)
+        if isinstance(other, Segment):
+            return other.collides(self)
         if isinstance(other, Point):
             return self.x == other.x and self.y == other.y
-        raise Exception("Argument 'other' of Point.collides(other) must be a Circle, Point, or Rectangle.")
+        raise Exception("Argument 'other' of Point.collides(other) must be a Circle, Point, Rectangle, Segment, or Triangle.")
 
     def distance(self, other):
         if isinstance(other, Point):
