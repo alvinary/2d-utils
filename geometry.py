@@ -315,11 +315,18 @@ class Triangle:
         if isinstance(other, Segment):
             # True if any of the segments ends is within the triangle
             # or the segment intersects with any of the edges
-            return False
+            v1, v2, v3 = self.vertices
+            triangle_edges = [Segment(v1, v2), Segment(v2, v3), Segment(v3, v1)]
+            return any([other.collides(e) for e in triangle_edges])
         if isinstance(other, Triangle):
-            # True if... sigh... any... of... the vertices is within the other triangle,
-            # or any pair of edges collide
-            return False
+            v1, v2, v3 = self.vertices
+            self_edges = [Segment(v1, v2), Segment(v2, v3), Segment(v3, v1)]
+            w1, w2, w3 = other.vertices
+            other_edges = [Segment(w1, w2), Segment(w2, w3), Segment(w3, w1)]
+            collisions = False
+            for edge in other_edges:
+                collisions = collisions or any([edge.collides(e) for e in self_edges])
+            return collisions
         raise Exception("Argument 'other' of Segment.collides(other) must be a Circle, Point, Rectangle, Segment or Triangle.")
 
     def move(self, x, y):
