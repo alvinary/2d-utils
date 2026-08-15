@@ -302,7 +302,7 @@ class Triangle:
             # True if any of the edges of self and other intersect,
             # or if any of the vertices of the triangle is contained
             # in the rectangle
-            vertices_inside = [v for v in self.vertices if other.collide(v)]
+            vertices_inside = [v for v in self.vertices if other.collides(v)]
             if vertices_inside:
                 return True
             v1, v2, v3 = self.vertices
@@ -315,7 +315,7 @@ class Triangle:
                       Segment(Point(mx, My), Point(mx, my))])
             collisions = False
             for edge in triangle_edges:
-                collisions = collisions or any([edge.collide(e) for e in rectangle_edges])
+                collisions = collisions or any([edge.collides(e) for e in rectangle_edges])
             return collisions
         if isinstance(other, Point):
             # Defined in an auxiliary function
@@ -341,9 +341,6 @@ class Triangle:
         pass
 
     def distance(self, other):
-        pass
-
-    def collide(self, other):
         pass
         
      
