@@ -177,7 +177,7 @@ class Rectangle:
     def collides(self, other):
         if isinstance(other, Point):
             check_x = other.x >= self.minimal.x and other.x <= self.maximal.x
-            check_y = other.y >= self.minimal.y and other.x <= self.maximal.y
+            check_y = other.y >= self.minimal.y and other.y <= self.maximal.y
             return check_x and check_y
         if isinstance(other, Rectangle):
             entirely_right = self.minimal.x > other.maximal.x
