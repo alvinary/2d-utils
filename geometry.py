@@ -105,7 +105,10 @@ class Circle:
             message = "Argument 'radius' of Circle(center, radius) must be greater than zero."
             specifics = f"\nHowever, the argument provided was {radius}."
             raise Exception(message + specifics)
-        
+    
+    def __eq__(self, other):
+        return self.radius == other.radius and self.center == other.center 
+
     def __str__(self):
         return dumps(self.save())
 
@@ -154,6 +157,9 @@ class Rectangle:
         
         if not self.minimal.x < self.maximal.x or not self.minimal.y < self.maximal.y:
             raise Exception('A Rectangle must have a minimal corner that is pointwise strictly smaller than its maximal corner')
+
+    def __eq__(self, other):
+        return self.minimal == other.minimal and self.maximal == other.maximal
 
     def __str__(self):
         return dumps(self.save())
