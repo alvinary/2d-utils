@@ -41,36 +41,31 @@ def segment_within_distance(p, q, a, d):
 
 # Segment intersection
 
+def point_on_segment(p, q, r):
+    return (q.x <= max(p.x, r.x) and q.x >= min(p.x, r.x) and
+            q.y <= max(p.y, r.y) and q.y >= min(p.y, r.y))
+
 def orientation(p, q, r):
-    px, py = p.x, p.y
-    qx, qy = q.x, q.y
-    rx, ry = r.x, r.y
-    result = (qy - py) * (rx - qx) - (qx - px) * (ry - qy)
-    if result > 0:
-        orientation = 1
-    if result < 0:
-        orientation = 2
-    if result == 0:
-        orientation = 0
-    return orientation
+    val = (q.y - p.y) * (r.x - q.x) - \
+          (q.x - p.x) * (r.y - q.y)
+    if val == 0:
+        return 0
+    return 1 if val > 0 else 2
 
-def on_segment(p, q, r):
-    return q.x <= max(p.x, r.x) and q.x >= min(p.x, r.x) and q.y <= max(p.y, r.y) and q.y >= min(p.y, r.y)
-
-def segments_intersect(p1, q1, p2, q2):
-    o1 = orientation(p1, q1, p2)
-    o2 = orientation(p1, q1, q2)
-    o3 = orientation(p2, q2, p1)
-    o4 = orientation(p2, q2, q1)
-    if ((o1 != o2) and (o3 != o4)):
+def segments_intersect(s, t):
+    o1 = orientation(s.begin, s.end, t.begin)
+    o2 = orientation(s.begin, s.end, t.end)
+    o3 = orientation(t.begin, t.end, s.begin)
+    o4 = orientation(t.begin, t.end, s.end)
+    if o1 != o2 and o3 != o4:
         return True
-    if ((o1 == 0) and on_segment(p1, p2, q1)):
+    if o1 == 0 and onSegment(s.begin, t.begin, s.end):
         return True
-    if ((o2 == 0) and on_segment(p1, q2, q1)):
+    if o2 == 0 and onSegment(s.begin, t.end, s.end):
         return True
-    if ((o3 == 0) and on_segment(p2, p1, q2)):
+    if o3 == 0 and onSegment(t.begin, s.begin, t.end):
         return True
-    if ((o4 == 0) and on_segment(p2, q1, q2)):
+    if o4 == 0 and onSegment(t.begin, s.end, t.end):
         return True
     return False
 
@@ -259,7 +254,7 @@ class Segment:
                     self.begin.y <= max(other.y, self.end.y) and 
                     self.begin.y >= min(other.y, self.end.y))
         if isinstance(other, Segment):
-            return segments_intersect(self.begin, self.end, other.begin, other.end)
+            return segments_intersect(self, other)
         if isinstance(other, Triangle):
             return other.collides(self)
         raise Exception("Argument 'other' of Segment.collides(other) must be a Circle, Point, Rectangle, Segment or Triangle.")
