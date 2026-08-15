@@ -59,13 +59,13 @@ def segments_intersect(s, t):
     o4 = orientation(t.begin, t.end, s.end)
     if o1 != o2 and o3 != o4:
         return True
-    if o1 == 0 and onSegment(s.begin, t.begin, s.end):
+    if o1 == 0 and point_on_segment(s.begin, t.begin, s.end):
         return True
-    if o2 == 0 and onSegment(s.begin, t.end, s.end):
+    if o2 == 0 and point_on_segment(s.begin, t.end, s.end):
         return True
-    if o3 == 0 and onSegment(t.begin, s.begin, t.end):
+    if o3 == 0 and point_on_segment(t.begin, s.begin, t.end):
         return True
-    if o4 == 0 and onSegment(t.begin, s.end, t.end):
+    if o4 == 0 and point_on_segment(t.begin, s.end, t.end):
         return True
     return False
 
